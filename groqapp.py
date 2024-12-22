@@ -30,11 +30,19 @@ prompt= ChatPromptTemplate.from_template(
     '''
 )
 
+st.title("Question answering with Groq using RAG")
+
+input_file = st.file_uploader("Please upload the file", type='pdf')
+
+if input_file is not None:
+    with open(input_file.name, mode='wb') as temp_file:
+        temp_file.write(input_file.getvalue())
+
 def create_vector_embeddings():
     if 'vectors' not in st.session_state:
         # st.session_state.embeddings = OllamaEmbeddings(model="gemma2:2b")
         st.session_state.embeddings = HuggingFaceEmbeddings(model_name = 'all-MiniLM-L6-v2')
-        st.session_state.loader = PyPDFLoader(r"C:\Users\risha\Documents\Data science\NLP_Krish naik\Langchain\1-Langchain\Data_Ingestion\TL2k_Userguide.pdf") ## Data Ingestion
+        st.session_state.loader = PyPDFLoader(input_file.name) ## Data Ingestion
         st.session_state.documents = st.session_state.loader.load() ## Loading the Document after ingestion
         st.session_state.text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap = 200)
         st.session_state.final_documents = st.session_state.text_splitter.split_documents(st.session_state.documents[:50])
