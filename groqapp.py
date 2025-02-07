@@ -17,9 +17,9 @@ import time
 ## Input the Groq API Key
 with st.sidebar:
     groq_api_key=st.text_input("Enter your Groq API key ",value="",type="password")
-    api_key=st.text_input("Enter your Hugging Face key:",type="password")
+    # api_key=st.text_input("Enter your Hugging Face key:",type="password")
 
-embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", api_key=api_key)
+embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 llm_model = ChatGroq(model = "Llama3-8b-8192",api_key=groq_api_key)
 
