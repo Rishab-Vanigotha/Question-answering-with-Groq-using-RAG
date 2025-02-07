@@ -16,7 +16,7 @@ import time
 
 load_dotenv()
 groq_api_key = os.getenv("GROQ_API_KEY")
-os.environ['HUGGINGFACE_TOKEN'] = os.getenv('HUGGINGFACE_TOKEN')
+# os.environ['HUGGINGFACE_TOKEN'] = os.getenv('HUGGINGFACE_TOKEN')
 
 llm_model = ChatGroq(model = "Llama3-8b-8192",api_key=groq_api_key)
 
