@@ -15,7 +15,7 @@ import streamlit as st
 import time
 
 ## Input the Groq API Key
-api_key=st.st.sidebar.text_input("Enter your Groq API key:",type="password")
+api_key=st.sidebar.text_input("Enter your Groq API key:",type="password")
 api_key=st.sidebar.text_input("Enter your Groq API key:",type="password")
 embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
