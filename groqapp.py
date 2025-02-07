@@ -15,9 +15,11 @@ import streamlit as st
 import time
 
 ## Input the Groq API Key
-api_key=st.sidebar.text_input("Enter your Groq API key:",type="password")
-api_key=st.sidebar.text_input("Enter your Groq API key:",type="password")
-embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+with st.sidebar:
+    groq_api_key=st.text_input("Enter your Groq API key ",value="",type="password")
+    api_key=st.text_input("Enter your Hugging Face key:",type="password")
+
+embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", api_key=api_key)
 
 llm_model = ChatGroq(model = "Llama3-8b-8192",api_key=groq_api_key)
 
