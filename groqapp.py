@@ -12,17 +12,22 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.output_parsers import StrOutputParser
 import streamlit as st
+from pathlib import Path
 import time
 
 load_dotenv()
-groq_api_key = os.getenv("GROQ_API_KEY")
-os.environ['HUGGINGFACE_TOKEN'] = os.getenv('HUGGINGFACE_TOKEN')
+# groq_api_key = os.getenv("GROQ_API_KEY")
+# os.environ['HUGGINGFACE_TOKEN'] = os.getenv('HUGGINGFACE_TOKEN')
 
-llm_model = ChatGroq(model = "Llama3-8b-8192",api_key=groq_api_key)
+# Take Token input from sidebar for Groq and HuggingFace
+with st.sidebar:
+    groq_api_key = st.text_input("Groq API Key", value="", type="password")
 
-prompt= ChatPromptTemplate.from_template(
-    '''Answer the question based on the provided context only
-    Please provide the most accurate response based on the question
+llm_model = ChatGroq(model="Llama3-8b-8192", api_key=groq_api_key)
+
+prompt = ChatPromptTemplate.from_template(
+    '''Answer the question based on the provided context only.
+    Please provide the most accurate response based on the question.
     <context>
     {context}
     <context>
@@ -30,44 +35,46 @@ prompt= ChatPromptTemplate.from_template(
     '''
 )
 
-st.title("Question answering with Groq using RAG")
+st.title("Question Answering with Groq using RAG")
 
-input_file = st.file_uploader("Please upload the file", type='pdf')
+input_file = st.file_uploader("Please upload the file", type='pdf', accept_multiple_files=False)
 
 if input_file is not None:
-    with open(input_file.name, mode='wb') as temp_file:
-        temp_file.write(input_file.getvalue())
+    temp_file_path = input_file.name
+    try:
+        with open(temp_file_path, mode='wb') as temp_file:
+            temp_file.write(input_file.getvalue())
+        st.write("File uploaded")
 
-def create_vector_embeddings():
-    if 'vectors' not in st.session_state:
-        # st.session_state.embeddings = OllamaEmbeddings(model="gemma2:2b")
-        st.session_state.embeddings = HuggingFaceEmbeddings(model_name = 'all-MiniLM-L6-v2')
-        st.session_state.loader = PyPDFLoader(input_file.name) ## Data Ingestion
-        st.session_state.documents = st.session_state.loader.load() ## Loading the Document after ingestion
-        st.session_state.text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap = 200)
-        st.session_state.final_documents = st.session_state.text_splitter.split_documents(st.session_state.documents[:50])
-        st.session_state.vectors = FAISS.from_documents(st.session_state.final_documents, st.session_state.embeddings)
+        # Create new vector embeddings for every new file uploaded and remove old embeddings
+        def create_vector_embeddings():
+            st.session_state.embeddings = HuggingFaceEmbeddings(model_name='all-MiniLM-L6-v2')
+            st.session_state.loader = PyPDFLoader(temp_file_path)  # Data Ingestion
+            st.session_state.documents = st.session_state.loader.load()  # Loading the Document after ingestion
+            st.session_state.text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+            st.session_state.final_documents = st.session_state.text_splitter.split_documents(st.session_state.documents[:50])
+            st.session_state.vectors = FAISS.from_documents(st.session_state.final_documents, st.session_state.embeddings)
+            st.write("Your Vector Database is ready")
+        
+        if st.button("Document Embedding"):
+            create_vector_embeddings()
+
+    finally:
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+            # st.write("Temporary file deleted")
 
 query = st.text_input("Enter your query")
 
-if st.button("Document Embedding"):
-    create_vector_embeddings()
-    st.write("Your Vector Database is ready")
-
 if query:
-   doc_chain = create_stuff_documents_chain(llm_model, prompt=prompt) 
-   retriever = st.session_state.vectors.as_retriever()
-   rag_chain = create_retrieval_chain(retriever, doc_chain)
+    doc_chain = create_stuff_documents_chain(llm_model, prompt=prompt)
+    retriever = st.session_state.vectors.as_retriever()
+    rag_chain = create_retrieval_chain(retriever, doc_chain)
 
-   start = time.process_time()
-   response = rag_chain.invoke({'input':query})
-   print("response time = ",time.process_time()-start)
+    start = time.process_time()
+    response = rag_chain.invoke({'input': query})
+    print("Response time =", time.process_time() - start)
 
-   st.write(response['answer'])
+    st.write(response['answer'])
 
-   ##with a streamlit expander
-
-   with st.expander('Document similarity search'):
-       for i,doc in enumerate(response['context']):
-           st.write(doc.page_content)
-           st.write('------------------------')
+    # With a Stream
