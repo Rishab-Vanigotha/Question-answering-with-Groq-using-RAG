@@ -77,4 +77,8 @@ if query:
 
     st.write(response['answer'])
 
-    # With a Stream
+    # With a Streamlit expander
+    with st.expander('Document similarity search'):
+        for i, doc in enumerate(response['context']):
+            st.write(doc.page_content)
+            st.write('------------------------')
